@@ -1,0 +1,123 @@
+package com.samarundbms.DBMS;
+
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+@SpringBootApplication
+public class SwingEx extends JFrame implements CommandLineRunner {
+
+    private final service service;
+
+    public SwingEx(service service) {
+        this.service = service;
+        setupUI();
+    }
+
+    private void setupUI() {
+        setTitle("Bus Service Management");
+        setSize(400, 300);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new GridLayout(0, 1));
+
+        JButton btnAllBuses = new JButton("View All Buses");
+        JButton btnSingleBus = new JButton("Find Single Bus");
+        JButton btnFindMany = new JButton("Find Multiple Buses");
+        JButton btnUpdate = new JButton("Update Bus Info");
+        JButton btnInsert = new JButton("Insert New Bus");
+        JButton btnDelete = new JButton("Delete Bus");
+
+        btnAllBuses.addActionListener(e -> showAllBuses());
+        btnSingleBus.addActionListener(e -> findSingleBus());
+        btnFindMany.addActionListener(e -> findMultipleBuses());
+        btnUpdate.addActionListener(e -> updateBusInfo());
+        btnInsert.addActionListener(e -> insertNewBus());
+        btnDelete.addActionListener(e -> deleteBus());
+
+        add(btnAllBuses);
+        add(btnSingleBus);
+        add(btnFindMany);
+        add(btnUpdate);
+        add(btnInsert);
+        add(btnDelete);
+
+        setVisible(true);
+    }
+
+    private void showAllBuses() {
+        List<tourism> buses = service.allbuses();
+        displayResult(buses.toString());
+    }
+
+    private void findSingleBus() {
+        String selection = JOptionPane.showInputDialog("Enter selection (e.g., 'ac')");
+        List<String> values = List.of("ac_non_ac");
+        Optional<List<tourism>> result = service.findac(values, selection);
+        displayResult(result.toString());
+    }
+
+    private void findMultipleBuses() {
+        Map<String, Object> conditions = Map.of(
+                "ac_non_ac", "ac",
+                "aseats", "8"
+        );
+        Optional<List<tourism>> result = service.findMany(conditions);
+        displayResult(result.toString());
+    }
+
+    private void updateBusInfo() {
+        Map<String, Object> conditions = Map.of(
+                "ac_non_ac", "ac_non_ac",
+                "aseats", "8"
+        );
+
+        Map<String, Object> updates = Map.of(
+                "ac_non_ac", "ac",
+                "aseats", "100"
+        );
+
+        String result = service.updateMany(conditions, updates);
+        displayResult(result);
+    }
+
+    private void insertNewBus() {
+        tourism tour = new tourism();
+        tour.setAcNonAc("ac");
+        tour.setAseats("100");
+        Object result = service.insertOne(tour);
+        displayResult("Inserted: " + result.toString());
+    }
+
+    private void deleteBus() {
+        String result = service.deleteByAcNonAc("ac");
+        displayResult(result);
+    }
+
+    private void displayResult(String result) {
+        JTextArea textArea = new JTextArea(10, 30);
+        textArea.setText(result);
+        textArea.setWrapStyleWord(true);
+        textArea.setLineWrap(true);
+        textArea.setCaretPosition(0);
+        textArea.setEditable(false);
+
+        JOptionPane.showMessageDialog(this, new JScrollPane(textArea), "Result", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    @Override
+    public void run(String... args) {
+        SwingUtilities.invokeLater(() -> new SwingEx(service).setVisible(true));
+    }
+
+    public static void main(String[] args) {
+        SpringApplication.run(SwingEx.class, args);
+    }
+}
